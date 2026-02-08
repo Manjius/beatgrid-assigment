@@ -64,15 +64,12 @@ class MovieApi(
         }
     }
 
-    override suspend fun selectMovie(id: Int): Movie {
+    override suspend fun selectMovie(id: Int) {
         AppLogger.d(tag, "selectMovie started id=$id")
 
-        return try {
+        try {
             httpClient.post("${apiBaseUrl()}/api/movies/$id/select")
-            val movie = getMovie(id)
-
             AppLogger.d(tag, "selectMovie success id=$id")
-            movie
         } catch (cancellationException: CancellationException) {
             AppLogger.d(tag, "selectMovie cancelled id=$id")
             throw cancellationException

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
@@ -38,6 +39,7 @@ import com.beatgridmedia.moviedb.data.model.Movie
 import com.beatgridmedia.moviedb.presentation.FrontPageState
 import com.beatgridmedia.moviedb.presentation.FrontPageStateHolder
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 @Composable
@@ -45,8 +47,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
     val stateHolder = remember { FrontPageStateHolder() }
     val movieApi: InterfaceMovieApi = remember { MovieApi() }
     var uiState by remember { mutableStateOf(FrontPageState()) }
-
-    var selectedSuggestionId by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.query) {
         if (uiState.isShowingMovieDetails || uiState.isLoadingMovie) {
@@ -72,23 +73,6 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         if (uiState.query.trim() == query) {
             uiState = stateHolder.updateSuggestions(uiState, movies)
         }
-    }
-
-    LaunchedEffect(selectedSuggestionId) {
-        val movieId = selectedSuggestionId ?: return@LaunchedEffect
-        selectedSuggestionId = null
-
-        val selectedMovie = try {
-            movieApi.selectMovie(movieId)
-            movieApi.getMovie(movieId)
-        } catch (cancellationException: CancellationException) {
-            throw cancellationException
-        } catch (_: Throwable) {
-            uiState = stateHolder.movieLoadFailed(uiState)
-            return@LaunchedEffect
-        }
-
-        uiState = stateHolder.showMovieDetails(uiState, selectedMovie)
     }
 
     if (uiState.isShowingMovieDetails) {
@@ -140,7 +124,19 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
                             },
                             onClick = {
                                 uiState = stateHolder.selectSuggestion(uiState, suggestion)
-                                selectedSuggestionId = suggestion.id
+                                coroutineScope.launch {
+                                    val selectedMovie = try {
+                                        movieApi.selectMovie(suggestion.id)
+                                        movieApi.getMovie(suggestion.id)
+                                    } catch (cancellationException: CancellationException) {
+                                        throw cancellationException
+                                    } catch (_: Throwable) {
+                                        uiState = stateHolder.movieLoadFailed(uiState)
+                                        return@launch
+                                    }
+
+                                    uiState = stateHolder.showMovieDetails(uiState, selectedMovie)
+                                }
                             }
                         )
                     }
