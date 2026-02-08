@@ -25,7 +25,18 @@ final class FrontPageViewModel: ObservableObject {
         }
 
         searchTask = Task {
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            do {
+                try await Task.sleep(nanoseconds: 500_000_000)
+            } catch is CancellationError {
+                return
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
+
             await fetchSuggestions(query: trimmed)
         }
     }
@@ -51,6 +62,8 @@ final class FrontPageViewModel: ObservableObject {
             }
 
             suggestions = Array(movies.prefix(5).map { $0.name })
+        } catch is CancellationError {
+            return
         } catch {
             suggestions = []
         }
@@ -68,7 +81,7 @@ struct ContentView: View {
 
             TextField("Search movies", text: $viewModel.query)
                 .textFieldStyle(.roundedBorder)
-                .onChange(of: viewModel.query) { _, newValue in
+                .onChange(of: viewModel.query) { newValue in
                     viewModel.queryChanged(newValue)
                 }
 
