@@ -80,7 +80,23 @@ class MovieApi(
     }
 
     override suspend fun getRecentSelections(): List<RecentSelection> {
-        TODO("Not yet implemented")
+        AppLogger.d(tag, "getRecentSelections started")
+
+        return try {
+            val results = httpClient.get("${apiBaseUrl()}/api/movies/recent").body<List<RecentSelection>>()
+
+            AppLogger.d(tag, "getRecentSelections success results=${results.size}")
+            results
+        } catch (cancellationException: CancellationException) {
+            AppLogger.d(tag, "getRecentSelections cancelled")
+            throw cancellationException
+        } catch (throwable: Throwable) {
+            AppLogger.e(
+                tag,
+                "getRecentSelections failed error='${throwable.message ?: "unknown"}'"
+            )
+            throw throwable
+        }
     }
 }
 

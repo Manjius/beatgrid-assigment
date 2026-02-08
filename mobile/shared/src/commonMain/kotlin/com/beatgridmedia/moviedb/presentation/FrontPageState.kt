@@ -2,11 +2,13 @@ package com.beatgridmedia.moviedb.presentation
 
 import com.beatgridmedia.moviedb.data.model.Movie
 import com.beatgridmedia.moviedb.data.model.MovieSearchResult
+import com.beatgridmedia.moviedb.data.model.RecentSelection
 
 data class FrontPageState(
     val query: String = "",
     val logoTitle: String = "Beatgrid Movies",
     val suggestions: List<MovieSearchResult> = emptyList(),
+    val recentSelections: List<RecentSelection> = emptyList(),
     val selectedMovie: Movie? = null,
     val isLoadingMovie: Boolean = false
 ) {
@@ -27,6 +29,10 @@ class FrontPageStateHolder {
 
     fun updateSuggestions(state: FrontPageState, movies: List<MovieSearchResult>): FrontPageState {
         return state.copy(suggestions = movies.take(5))
+    }
+
+    fun updateRecentSelections(state: FrontPageState, recents: List<RecentSelection>): FrontPageState {
+        return state.copy(recentSelections = recents.distinctBy { it.movieId }.take(12))
     }
 
     fun selectSuggestion(state: FrontPageState, suggestion: MovieSearchResult): FrontPageState {
