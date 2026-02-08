@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeMultiplatform)
 }
 
 kotlin {
@@ -32,11 +30,6 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.compose.multiplatform.runtime)
-            implementation(libs.compose.multiplatform.foundation)
-            implementation(libs.compose.multiplatform.ui)
-            implementation(libs.compose.multiplatform.material3)
-
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
