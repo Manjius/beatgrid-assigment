@@ -25,6 +25,7 @@ import com.beatgridmedia.moviedb.data.api.InterfaceMovieApi
 import com.beatgridmedia.moviedb.data.api.MovieApi
 import com.beatgridmedia.moviedb.presentation.FrontPageState
 import com.beatgridmedia.moviedb.presentation.FrontPageStateHolder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 @Composable
@@ -50,9 +51,13 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
             delay(500)
         }
 
-        val movies = runCatching {
+        val movies = try {
             movieApi.searchMovies(query)
-        }.getOrDefault(emptyList())
+        } catch (cancellationException: CancellationException) {
+            throw cancellationException
+        } catch (_: Throwable) {
+            emptyList()
+        }
 
         if (uiState.query.trim() == query) {
             uiState = stateHolder.updateSuggestions(uiState, movies)

@@ -10,6 +10,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 class MovieApi(
@@ -33,6 +34,9 @@ class MovieApi(
 
             AppLogger.d(tag, "searchMovies success query='$query' results=${results.size}")
             results
+        } catch (cancellationException: CancellationException) {
+            AppLogger.d(tag, "searchMovies cancelled query='$query'")
+            throw cancellationException
         } catch (throwable: Throwable) {
             AppLogger.e(
                 tag,
