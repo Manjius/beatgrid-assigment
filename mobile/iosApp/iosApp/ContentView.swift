@@ -1,72 +1,45 @@
 import SwiftUI
-
-private struct MovieSuggestion: Decodable {
-    let id: Int
-    let name: String
-    let year: Int
-    let thumbnailUrl: String
-}
+import shared
 
 @MainActor
 final class FrontPageViewModel: ObservableObject {
-    @Published var query: String = ""
-    @Published var suggestions: [String] = []
+    @Published var state = FrontPageState(
+        query: "",
+        logoTitle: "Beatgrid Movies",
+        suggestions: [],
+        searchConnectionFailed: false,
+        recentSelections: [],
+        recentsConnectionFailed: false,
+        selectedMovie: nil,
+        isLoadingMovie: false
+    )
 
-    private var searchTask: Task<Void, Never>?
+    private let bridge = IosFrontPageBridge()
 
-    func queryChanged(_ value: String) {
-        query = value
-        searchTask?.cancel()
-
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            suggestions = []
-            return
-        }
-
-        searchTask = Task {
-            do {
-                try await Task.sleep(nanoseconds: 500_000_000)
-            } catch is CancellationError {
-                return
-            } catch {
-                return
-            }
-
-            guard !Task.isCancelled else {
-                return
-            }
-
-            await fetchSuggestions(query: trimmed)
+    init() {
+        bridge.startObserving { [weak self] newState in
+            self?.state = newState
         }
     }
 
-    func selectSuggestion(_ suggestion: String) {
-        query = suggestion
-        suggestions = [suggestion]
+    deinit {
+        bridge.clear()
     }
 
-    private func fetchSuggestions(query: String) async {
-        do {
-            let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-            guard let url = URL(string: "http://localhost:8080/api/movies/search?q=\(encodedQuery)") else {
-                suggestions = []
-                return
-            }
+    func onQueryChanged(_ query: String) {
+        bridge.onQueryChanged(query: query)
+    }
 
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let movies = try JSONDecoder().decode([MovieSuggestion].self, from: data)
+    func onSuggestionSelected(_ suggestion: MovieSearchResult) {
+        bridge.onSuggestionSelected(suggestion: suggestion)
+    }
 
-            guard self.query.trimmingCharacters(in: .whitespacesAndNewlines) == query else {
-                return
-            }
+    func onRecentSelected(_ movieId: Int32) {
+        bridge.onRecentSelected(movieId: Int(movieId))
+    }
 
-            suggestions = Array(movies.prefix(5).map { $0.name })
-        } catch is CancellationError {
-            return
-        } catch {
-            suggestions = []
-        }
+    func onBack() {
+        bridge.onBack()
     }
 }
 
@@ -74,51 +47,134 @@ struct ContentView: View {
     @StateObject private var viewModel = FrontPageViewModel()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Beatgrid Movies")
-                .font(.largeTitle)
-                .fontWeight(.semibold)
-
-            TextField("Search movies", text: $viewModel.query)
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: viewModel.query) { newValue in
-                    viewModel.queryChanged(newValue)
-                }
-
-            if !viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.suggestions.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(viewModel.suggestions, id: \.self) { suggestion in
-                        Button {
-                            viewModel.selectSuggestion(suggestion)
-                        } label: {
-                            HStack {
-                                Text(suggestion)
-                                    .foregroundColor(.primary)
-                                Spacer()
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                        }
-                        .buttonStyle(.plain)
-
-                        if suggestion != viewModel.suggestions.last {
-                            Divider()
-                        }
-                    }
-                }
-                .background(Color(uiColor: .secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+        if let selectedMovie = viewModel.state.selectedMovie {
+            MovieDetailsView(movie: selectedMovie) {
+                viewModel.onBack()
             }
-
-            Spacer()
+        } else {
+            FrontPageContent(viewModel: viewModel)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 32)
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+private struct FrontPageContent: View {
+    @ObservedObject var viewModel: FrontPageViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(viewModel.state.logoTitle)
+                    .font(.largeTitle)
+                    .fontWeight(.semibold)
+
+                TextField(
+                    "Search movies",
+                    text: Binding(
+                        get: { viewModel.state.query },
+                        set: { viewModel.onQueryChanged($0) }
+                    )
+                )
+                .textFieldStyle(.roundedBorder)
+
+                if viewModel.state.isDropdownVisible {
+                    VStack(spacing: 0) {
+                        ForEach(viewModel.state.suggestions, id: \.id) { suggestion in
+                            Button {
+                                viewModel.onSuggestionSelected(suggestion)
+                            } label: {
+                                HStack {
+                                    Text("\(suggestion.name) (\(suggestion.year))")
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                            }
+                            .buttonStyle(.plain)
+
+                            if suggestion.id != viewModel.state.suggestions.last?.id {
+                                Divider()
+                            }
+                        }
+                    }
+                    .background(Color(uiColor: .secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                if viewModel.state.searchConnectionFailed && !viewModel.state.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Can't connect to the database to search, sorry :(")
+                }
+
+                if viewModel.state.isLoadingMovie {
+                    Text("Loading movie details...")
+                }
+
+                if viewModel.state.recentsConnectionFailed {
+                    Text("We can't load thumbnails from the database, sorry :(")
+                        .padding(.top, 8)
+                }
+
+                if !viewModel.state.recentSelections.isEmpty {
+                    Text("Recently Selected")
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .padding(.top, 12)
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                        ForEach(viewModel.state.recentSelections, id: \.movieId) { recent in
+                            Button {
+                                viewModel.onRecentSelected(recent.movieId)
+                            } label: {
+                                AsyncImage(url: URL(string: recent.thumbnailUrl)) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                } placeholder: {
+                                    Color.gray.opacity(0.2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
+        }
+    }
+}
+
+private struct MovieDetailsView: View {
+    let movie: Movie
+    let onBack: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Button("Back", action: onBack)
+
+                Text(movie.name)
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                Text("\(movie.year)")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+
+                Text(movie.description_)
+                    .font(.body)
+
+                if !movie.genres.isEmpty {
+                    Text("Genres: \(movie.genres.map { $0.name }.joined(separator: ", "))")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
+        }
     }
 }
