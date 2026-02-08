@@ -1,5 +1,8 @@
 package com.beatgridmedia.moviedb.data.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RecentSelection(
     val movieId: Int,
     val name: String,

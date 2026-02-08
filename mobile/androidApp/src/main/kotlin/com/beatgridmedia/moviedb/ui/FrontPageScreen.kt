@@ -1,8 +1,10 @@
 package com.beatgridmedia.moviedb.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -30,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -48,6 +53,22 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
     val movieApi: InterfaceMovieApi = remember { MovieApi() }
     var uiState by remember { mutableStateOf(FrontPageState()) }
     val coroutineScope = rememberCoroutineScope()
+
+    suspend fun loadRecentSelections() {
+        val recents = try {
+            movieApi.getRecentSelections()
+        } catch (cancellationException: CancellationException) {
+            throw cancellationException
+        } catch (_: Throwable) {
+            emptyList()
+        }
+
+        uiState = stateHolder.updateRecentSelections(uiState, recents)
+    }
+
+    LaunchedEffect(Unit) {
+        loadRecentSelections()
+    }
 
     LaunchedEffect(uiState.query) {
         if (uiState.isShowingMovieDetails || uiState.isLoadingMovie) {
@@ -136,6 +157,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
                                     }
 
                                     uiState = stateHolder.showMovieDetails(uiState, selectedMovie)
+                                    loadRecentSelections()
                                 }
                             }
                         )
@@ -147,6 +169,59 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         if (uiState.isLoadingMovie) {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading movie details...")
+        }
+
+        if (uiState.recentSelections.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "Recently Selected",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                uiState.recentSelections.chunked(5).forEach { rowRecents ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowRecents.forEach { recent ->
+                            Image(
+                                painter = rememberAsyncImagePainter(model = recent.thumbnailUrl),
+                                contentDescription = recent.name,
+                                modifier = Modifier
+                                    .size(60.dp, 90.dp)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable {
+                                        uiState = uiState.copy(isLoadingMovie = true, suggestions = emptyList())
+                                        coroutineScope.launch {
+                                            val movie = try {
+                                                movieApi.getMovie(recent.movieId)
+                                            } catch (cancellationException: CancellationException) {
+                                                throw cancellationException
+                                            } catch (_: Throwable) {
+                                                uiState = stateHolder.movieLoadFailed(uiState)
+                                                return@launch
+                                            }
+
+                                            uiState = stateHolder.showMovieDetails(uiState, movie)
+                                        }
+                                    },
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        repeat(5 - rowRecents.size) {
+                            Spacer(modifier = Modifier.width(60.dp))
+                        }
+                    }
+                }
+            }
         }
     }
 }
