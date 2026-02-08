@@ -1,5 +1,7 @@
 package com.beatgridmedia.moviedb.presentation
 
+import com.beatgridmedia.moviedb.data.model.MovieSearchResult
+
 data class FrontPageState(
     val query: String = "",
     val logoTitle: String = "Beatgrid Movies",
@@ -10,19 +12,15 @@ data class FrontPageState(
 }
 
 class FrontPageStateHolder {
-    private val defaultSuggestion = "the movie goes here"
-
-    fun updateQuery(query: String): FrontPageState {
-        val suggestions = if (query.isBlank()) {
-            emptyList()
-        } else {
-            listOf(defaultSuggestion)
-        }
-
-        return FrontPageState(
+    fun updateQuery(state: FrontPageState, query: String): FrontPageState {
+        return state.copy(
             query = query,
-            suggestions = suggestions
+            suggestions = if (query.isBlank()) emptyList() else state.suggestions
         )
+    }
+
+    fun updateSuggestions(state: FrontPageState, movies: List<MovieSearchResult>): FrontPageState {
+        return state.copy(suggestions = movies.take(5).map { it.name })
     }
 
     fun selectSuggestion(state: FrontPageState, suggestion: String): FrontPageState {
