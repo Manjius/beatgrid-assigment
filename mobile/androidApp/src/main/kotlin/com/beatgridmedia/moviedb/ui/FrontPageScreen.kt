@@ -60,7 +60,8 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            emptyList()
+            uiState = stateHolder.recentsUnavailable(uiState)
+            return
         }
 
         uiState = stateHolder.updateRecentSelections(uiState, recents)
@@ -77,7 +78,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
 
         val query = uiState.query.trim()
         if (query.isBlank()) {
-            uiState = uiState.copy(suggestions = emptyList())
+            uiState = uiState.copy(suggestions = emptyList(), searchConnectionFailed = false)
             return@LaunchedEffect
         }
 
@@ -88,7 +89,10 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            emptyList()
+            if (uiState.query.trim() == query) {
+                uiState = stateHolder.searchUnavailable(uiState)
+            }
+            return@LaunchedEffect
         }
 
         if (uiState.query.trim() == query) {
@@ -166,9 +170,27 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
             }
         }
 
+        if (uiState.searchConnectionFailed && uiState.query.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "we couldn't connect to the database, sorry :(",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
+        }
+
         if (uiState.isLoadingMovie) {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading movie details...")
+        }
+
+        if (uiState.recentsConnectionFailed) {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "we couldn't connect to the database, sorry :(",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
         }
 
         if (uiState.recentSelections.isNotEmpty()) {
