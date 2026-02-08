@@ -33,23 +33,15 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
     val stateHolder = remember { FrontPageStateHolder() }
     val movieApi: InterfaceMovieApi = remember { MovieApi() }
     var uiState by remember { mutableStateOf(FrontPageState()) }
-    var lastSearchedQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.query) {
         val query = uiState.query.trim()
         if (query.isBlank()) {
-            lastSearchedQuery = ""
             uiState = uiState.copy(suggestions = emptyList())
             return@LaunchedEffect
         }
 
-        if (query == lastSearchedQuery) {
-            return@LaunchedEffect
-        }
-
-        if (lastSearchedQuery.isNotBlank()) {
-            delay(500)
-        }
+        delay(500)
 
         val movies = try {
             movieApi.searchMovies(query)
@@ -61,7 +53,6 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
 
         if (uiState.query.trim() == query) {
             uiState = stateHolder.updateSuggestions(uiState, movies)
-            lastSearchedQuery = query
         }
     }
 
