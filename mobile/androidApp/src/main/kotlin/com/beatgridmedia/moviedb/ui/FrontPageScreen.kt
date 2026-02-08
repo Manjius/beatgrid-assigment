@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -173,7 +172,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         if (uiState.searchConnectionFailed && uiState.query.isNotBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "we couldn't connect to the database, sorry :(",
+                text = "Can't connect to the database to search, sorry :(",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start
             )
@@ -187,7 +186,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         if (uiState.recentsConnectionFailed) {
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "we couldn't connect to the database, sorry :(",
+                text = "We can't load thumbnails from the database, sorry :(",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start
             )
