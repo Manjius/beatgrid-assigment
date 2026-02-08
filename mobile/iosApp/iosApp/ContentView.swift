@@ -35,7 +35,7 @@ final class FrontPageViewModel: ObservableObject {
     }
 
     func onRecentSelected(_ movieId: Int32) {
-        bridge.onRecentSelected(movieId: Int(movieId))
+        bridge.onRecentSelected(movieId: movieId)
     }
 
     func onBack() {
@@ -168,7 +168,7 @@ private struct MovieDetailsView: View {
                     .font(.body)
 
                 if !movie.genres.isEmpty {
-                    Text("Genres: \(movie.genres.map { $0.name }.joined(separator: ", "))")
+                    Text("Genres: \(movie.genres.joined(separator: ", "))")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
