@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -60,7 +59,8 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            emptyList()
+            uiState = stateHolder.recentsUnavailable(uiState)
+            return
         }
 
         uiState = stateHolder.updateRecentSelections(uiState, recents)
@@ -77,7 +77,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
 
         val query = uiState.query.trim()
         if (query.isBlank()) {
-            uiState = uiState.copy(suggestions = emptyList())
+            uiState = uiState.copy(suggestions = emptyList(), searchConnectionFailed = false)
             return@LaunchedEffect
         }
 
@@ -88,7 +88,10 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            emptyList()
+            if (uiState.query.trim() == query) {
+                uiState = stateHolder.searchUnavailable(uiState)
+            }
+            return@LaunchedEffect
         }
 
         if (uiState.query.trim() == query) {
@@ -166,9 +169,27 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
             }
         }
 
+        if (uiState.searchConnectionFailed && uiState.query.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Can't connect to the database to search, sorry :(",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
+        }
+
         if (uiState.isLoadingMovie) {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading movie details...")
+        }
+
+        if (uiState.recentsConnectionFailed) {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "We can't load thumbnails from the database, sorry :(",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
         }
 
         if (uiState.recentSelections.isNotEmpty()) {

@@ -8,7 +8,9 @@ data class FrontPageState(
     val query: String = "",
     val logoTitle: String = "Beatgrid Movies",
     val suggestions: List<MovieSearchResult> = emptyList(),
+    val searchConnectionFailed: Boolean = false,
     val recentSelections: List<RecentSelection> = emptyList(),
+    val recentsConnectionFailed: Boolean = false,
     val selectedMovie: Movie? = null,
     val isLoadingMovie: Boolean = false
 ) {
@@ -23,16 +25,37 @@ class FrontPageStateHolder {
     fun updateQuery(state: FrontPageState, query: String): FrontPageState {
         return state.copy(
             query = query,
-            suggestions = if (query.isBlank()) emptyList() else state.suggestions
+            suggestions = if (query.isBlank()) emptyList() else state.suggestions,
+            searchConnectionFailed = if (query.isBlank()) false else state.searchConnectionFailed
         )
     }
 
     fun updateSuggestions(state: FrontPageState, movies: List<MovieSearchResult>): FrontPageState {
-        return state.copy(suggestions = movies.take(5))
+        return state.copy(
+            suggestions = movies.take(5),
+            searchConnectionFailed = false
+        )
+    }
+
+    fun searchUnavailable(state: FrontPageState): FrontPageState {
+        return state.copy(
+            suggestions = emptyList(),
+            searchConnectionFailed = true
+        )
     }
 
     fun updateRecentSelections(state: FrontPageState, recents: List<RecentSelection>): FrontPageState {
-        return state.copy(recentSelections = recents.distinctBy { it.movieId }.take(12))
+        return state.copy(
+            recentSelections = recents.distinctBy { it.movieId }.take(12),
+            recentsConnectionFailed = false
+        )
+    }
+
+    fun recentsUnavailable(state: FrontPageState): FrontPageState {
+        return state.copy(
+            recentSelections = emptyList(),
+            recentsConnectionFailed = true
+        )
     }
 
     fun selectSuggestion(state: FrontPageState, suggestion: MovieSearchResult): FrontPageState {
