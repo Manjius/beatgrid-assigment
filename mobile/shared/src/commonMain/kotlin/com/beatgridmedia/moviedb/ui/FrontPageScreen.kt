@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,13 +21,40 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.beatgridmedia.moviedb.data.api.InterfaceMovieApi
+import com.beatgridmedia.moviedb.data.api.MovieApi
 import com.beatgridmedia.moviedb.presentation.FrontPageState
 import com.beatgridmedia.moviedb.presentation.FrontPageStateHolder
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 
 @Composable
 fun FrontPageScreen(modifier: Modifier = Modifier) {
     val stateHolder = remember { FrontPageStateHolder() }
+    val movieApi: InterfaceMovieApi = remember { MovieApi() }
     var uiState by remember { mutableStateOf(FrontPageState()) }
+
+    LaunchedEffect(uiState.query) {
+        val query = uiState.query.trim()
+        if (query.isBlank()) {
+            uiState = uiState.copy(suggestions = emptyList())
+            return@LaunchedEffect
+        }
+
+        delay(500)
+
+        val movies = try {
+            movieApi.searchMovies(query)
+        } catch (cancellationException: CancellationException) {
+            throw cancellationException
+        } catch (_: Throwable) {
+            emptyList()
+        }
+
+        if (uiState.query.trim() == query) {
+            uiState = stateHolder.updateSuggestions(uiState, movies)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -45,7 +73,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
         OutlinedTextField(
             value = uiState.query,
             onValueChange = { query ->
-                uiState = stateHolder.updateQuery(query)
+                uiState = stateHolder.updateQuery(uiState, query)
             },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Search movies") },
