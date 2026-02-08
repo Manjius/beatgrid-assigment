@@ -9,6 +9,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
@@ -47,11 +48,37 @@ class MovieApi(
     }
 
     override suspend fun getMovie(id: Int): Movie {
-        TODO("Not yet implemented")
+        AppLogger.d(tag, "getMovie started id=$id")
+
+        return try {
+            val movie = httpClient.get("${apiBaseUrl()}/api/movies/$id").body<Movie>()
+
+            AppLogger.d(tag, "getMovie success id=$id")
+            movie
+        } catch (cancellationException: CancellationException) {
+            AppLogger.d(tag, "getMovie cancelled id=$id")
+            throw cancellationException
+        } catch (throwable: Throwable) {
+            AppLogger.e(tag, "getMovie failed id=$id error='${throwable.message ?: "unknown"}'")
+            throw throwable
+        }
     }
 
     override suspend fun selectMovie(id: Int): Movie {
-        TODO("Not yet implemented")
+        AppLogger.d(tag, "selectMovie started id=$id")
+
+        return try {
+            val movie = httpClient.post("${apiBaseUrl()}/api/movies/$id/select").body<Movie>()
+
+            AppLogger.d(tag, "selectMovie success id=$id")
+            movie
+        } catch (cancellationException: CancellationException) {
+            AppLogger.d(tag, "selectMovie cancelled id=$id")
+            throw cancellationException
+        } catch (throwable: Throwable) {
+            AppLogger.e(tag, "selectMovie failed id=$id error='${throwable.message ?: "unknown"}'")
+            throw throwable
+        }
     }
 
     override suspend fun getRecentSelections(): List<RecentSelection> {
