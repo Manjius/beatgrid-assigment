@@ -7,6 +7,6 @@ import com.beatgridmedia.moviedb.data.model.RecentSelection
 interface InterfaceMovieApi {
     suspend fun searchMovies(query: String): List<MovieSearchResult>
     suspend fun getMovie(id: Int): Movie
-    suspend fun selectMovie(id: Int): Movie
+    suspend fun selectMovie(id: Int)
     suspend fun getRecentSelections(): List<RecentSelection>
 }
