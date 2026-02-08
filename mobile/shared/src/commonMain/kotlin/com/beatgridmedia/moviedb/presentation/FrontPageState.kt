@@ -32,7 +32,7 @@ class FrontPageStateHolder {
     }
 
     fun updateRecentSelections(state: FrontPageState, recents: List<RecentSelection>): FrontPageState {
-        return state.copy(recentSelections = recents.distinctBy { it.movieId }.take(10))
+        return state.copy(recentSelections = recents.distinctBy { it.movieId }.take(12))
     }
 
     fun selectSuggestion(state: FrontPageState, suggestion: MovieSearchResult): FrontPageState {

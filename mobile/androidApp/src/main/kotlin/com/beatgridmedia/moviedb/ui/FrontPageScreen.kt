@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -185,7 +185,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                uiState.recentSelections.chunked(5).forEach { rowRecents ->
+                uiState.recentSelections.chunked(3).forEach { rowRecents ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -195,7 +195,8 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
                                 painter = rememberAsyncImagePainter(model = recent.thumbnailUrl),
                                 contentDescription = recent.name,
                                 modifier = Modifier
-                                    .size(60.dp, 90.dp)
+                                    .weight(1f)
+                                    .aspectRatio(2f / 3f)
                                     .clip(MaterialTheme.shapes.small)
                                     .clickable {
                                         uiState = uiState.copy(isLoadingMovie = true, suggestions = emptyList())
@@ -216,8 +217,12 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
                             )
                         }
 
-                        repeat(5 - rowRecents.size) {
-                            Spacer(modifier = Modifier.width(60.dp))
+                        repeat(3 - rowRecents.size) {
+                            Spacer(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(2f / 3f)
+                            )
                         }
                     }
                 }
