@@ -1,27 +1,18 @@
 import SwiftUI
 import shared
 
+struct FrontPageContainerViewController: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        FrontPageViewControllerKt.FrontPageViewController()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
 struct ContentView: View {
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Movie Database")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-
-            Text("""
-                Your task is to implement the movie search UI here.
-
-                Use the provided shared module with:
-                - SearchMoviesUseCase
-                - GetMovieDetailsUseCase
-                - SelectMovieUseCase
-                - GetRecentSelectionsUseCase
-                """)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-        }
-        .padding()
+        FrontPageContainerViewController()
+            .ignoresSafeArea(.keyboard)
     }
 }
 

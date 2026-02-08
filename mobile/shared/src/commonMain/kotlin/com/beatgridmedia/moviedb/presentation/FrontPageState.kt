@@ -24,4 +24,11 @@ class FrontPageStateHolder {
             suggestions = suggestions
         )
     }
+
+    fun selectSuggestion(state: FrontPageState, suggestion: String): FrontPageState {
+        return state.copy(
+            query = suggestion,
+            suggestions = listOf(suggestion)
+        )
+    }
 }
