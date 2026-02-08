@@ -80,6 +80,7 @@ fun FrontPageScreen(modifier: Modifier = Modifier) {
 
         val selectedMovie = try {
             movieApi.selectMovie(movieId)
+            movieApi.getMovie(movieId)
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {

@@ -68,7 +68,8 @@ class MovieApi(
         AppLogger.d(tag, "selectMovie started id=$id")
 
         return try {
-            val movie = httpClient.post("${apiBaseUrl()}/api/movies/$id/select").body<Movie>()
+            httpClient.post("${apiBaseUrl()}/api/movies/$id/select")
+            val movie = getMovie(id)
 
             AppLogger.d(tag, "selectMovie success id=$id")
             movie
