@@ -3,13 +3,13 @@ package com.beatgridmedia.moviedb.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import com.beatgridmedia.moviedb.ui.FrontPageScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PlaceholderScreen()
+                    FrontPageScreen()
                 }
             }
         }
@@ -33,31 +33,4 @@ fun MovieDBTheme(content: @Composable () -> Unit) {
         colorScheme = lightColorScheme(),
         content = content
     )
-}
-
-@Composable
-fun PlaceholderScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Movie Database",
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Your task is to implement the movie search UI here.\n\n" +
-                    "Use the provided shared module with:\n" +
-                    "- SearchMoviesUseCase\n" +
-                    "- GetMovieDetailsUseCase\n" +
-                    "- SelectMovieUseCase\n" +
-                    "- GetRecentSelectionsUseCase",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
-    }
 }
