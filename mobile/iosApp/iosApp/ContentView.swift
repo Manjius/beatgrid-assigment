@@ -83,7 +83,7 @@ private struct FrontPageContent: View {
                                 viewModel.onSuggestionSelected(suggestion)
                             } label: {
                                 HStack {
-                                    Text("\(suggestion.name) (\(suggestion.year))")
+                                    Text("\(suggestion.name) (\(String(suggestion.year)))")
                                         .foregroundColor(.primary)
                                     Spacer()
                                 }
@@ -152,29 +152,53 @@ private struct MovieDetailsView: View {
     let onBack: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Button("Back", action: onBack)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    AsyncImage(url: URL(string: movie.imageUrl)) { image in
+                        image
+                            .resizable()
+                            .scaledToFit()
+                    } placeholder: {
+                        Color.gray.opacity(0.2)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                Text(movie.name)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    Text(movie.name)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
 
-                Text("\(movie.year)")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-
-                Text(movie.description_)
-                    .font(.body)
-
-                if !movie.genres.isEmpty {
-                    Text("Genres: \(movie.genres.joined(separator: ", "))")
-                        .font(.callout)
+                    Text(normalizedYear(movie.year))
+                        .font(.title3)
                         .foregroundStyle(.secondary)
+
+                    Text(movie.description_)
+                        .font(.body)
+
+                    if !movie.genres.isEmpty {
+                        Text("Genres: \(movie.genres.joined(separator: ", "))")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 24)
             }
+
+            Button(action: onBack) {
+                Text("Back")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.borderedProminent)
             .padding(.horizontal, 24)
-            .padding(.vertical, 32)
+            .padding(.vertical, 16)
         }
+    }
+
+    private func normalizedYear(_ year: Int32) -> String {
+        String(year)
     }
 }
